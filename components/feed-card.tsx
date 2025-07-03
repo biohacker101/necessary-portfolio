@@ -12,16 +12,14 @@ import {
   Newspaper,
   FileText,
   Hash,
-  MoreHorizontal,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import type { FeedItem } from "@/lib/mock-data"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 
 interface FeedCardProps {
   item: FeedItem
@@ -38,49 +36,69 @@ const sourceIcons = {
 }
 
 const sourceColors = {
-  linkedin: "text-blue-400",
-  twitter: "text-sky-400",
-  news: "text-orange-400",
-  blog: "text-green-400",
-  other: "text-gray-400",
+  linkedin: "text-sky-600",
+  twitter: "text-blue-500",
+  news: "text-indigo-500",
+  blog: "text-purple-500",
+  other: "text-slate-500",
 }
 
 export function FeedCard({ item, onBookmark, onMarkAsRead }: FeedCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const SourceIcon = sourceIcons[item.source as keyof typeof sourceIcons]
 
+  // Format date more specifically
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    
+    if (isToday(date)) {
+      return `Today, ${format(date, "h:mm a")}`
+    } else if (isYesterday(date)) {
+      return `Yesterday, ${format(date, "h:mm a")}`
+    } else {
+      const now = new Date()
+      const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (diffInDays < 7) {
+        return `${format(date, "EEEE")}, ${format(date, "h:mm a")}`
+      } else {
+        return format(date, "MMM d, yyyy")
+      }
+    }
+  }
+
   return (
     <Card
       className={cn(
-        "glass-card rounded-2xl transition-all duration-300 hover:bg-white/10 hover:shadow-2xl border-white/10",
-        item.read && "opacity-60",
+        "necessary-card transition-all duration-300 hover:shadow-xl",
+        item.read && "opacity-60 bg-white/40",
       )}
     >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            <Avatar className="h-12 w-12 ring-2 ring-white/20">
+            <Avatar className="h-12 w-12 border border-sky-100 shadow-sm">
               <AvatarImage src={item.company.logo || "/placeholder.svg"} alt={item.company.name} />
-              <AvatarFallback className="bg-white/10 text-white font-medium">
+              <AvatarFallback className="bg-gradient-to-br from-sky-50 to-blue-50 text-slate-600 font-light">
                 {item.company.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <span className="font-semibold text-white tracking-tight">{item.company.name}</span>
+                <span className="font-medium text-slate-700">{item.company.name}</span>
                 <div className="flex items-center gap-2">
                   <SourceIcon className={cn("h-4 w-4", sourceColors[item.source as keyof typeof sourceColors])} />
-                  <span className="text-xs text-white/60 capitalize font-medium">{item.source}</span>
+                  <span className="text-xs text-slate-400 capitalize font-light">{item.source}</span>
                 </div>
               </div>
 
-              <h3 className="font-medium text-lg leading-tight line-clamp-2 text-white tracking-tight">
+              <h3 className="font-light text-lg leading-tight line-clamp-2 text-slate-800 tracking-wide">
                 <a
                   href={item.originalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white/80 transition-colors"
+                  className="hover:text-sky-600 transition-colors"
                 >
                   {item.title}
                 </a>
@@ -93,46 +111,26 @@ export function FeedCard({ item, onBookmark, onMarkAsRead }: FeedCardProps) {
               variant="ghost"
               size="icon"
               onClick={() => onBookmark(item.id)}
-              className="h-10 w-10 glass-button rounded-full text-white hover:bg-white/20"
+              className="h-8 w-8 text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
             >
-              {item.bookmarked ? <BookmarkCheck className="h-4 w-4 text-white" /> : <Bookmark className="h-4 w-4" />}
+              {item.bookmarked ? <BookmarkCheck className="h-4 w-4 text-sky-600" /> : <Bookmark className="h-4 w-4" />}
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onMarkAsRead(item.id)}
-              className="h-10 w-10 glass-button rounded-full text-white hover:bg-white/20"
+              className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
             >
               {item.read ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 glass-button rounded-full text-white hover:bg-white/20"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="glass-card border-white/10">
-                <DropdownMenuItem className="text-white hover:bg-white/10">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Open Original
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-white/10">Share</DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-white/10">Hide Similar</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-0">
         <div className="space-y-4">
-          <p className={cn("text-white/80 leading-relaxed tracking-tight", !isExpanded && "line-clamp-3")}>
+          <p className={cn("text-slate-600 leading-relaxed font-light", !isExpanded && "line-clamp-3")}>
             {item.summary}
           </p>
 
@@ -141,7 +139,7 @@ export function FeedCard({ item, onBookmark, onMarkAsRead }: FeedCardProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-auto p-0 text-white/60 hover:text-white font-medium"
+              className="h-auto p-0 text-sky-600 hover:text-sky-700 font-light"
             >
               {isExpanded ? "Show less" : "Read more"}
             </Button>
@@ -149,23 +147,23 @@ export function FeedCard({ item, onBookmark, onMarkAsRead }: FeedCardProps) {
 
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-2">
-              {item.tags.map((tag) => (
-                <Badge key={tag} className="glass-badge rounded-full text-white text-xs font-medium px-3 py-1">
+              {item.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs px-3 py-1 bg-sky-50 text-sky-700 border-0 font-light rounded-full">
                   {tag}
                 </Badge>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-white/60">
-              <span className="font-medium">{formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}</span>
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="font-light">{formatTimestamp(item.timestamp)}</span>
               <a
                 href={item.originalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-white transition-colors font-medium"
+                className="inline-flex items-center gap-1 hover:text-sky-600 transition-colors font-light"
               >
                 <ExternalLink className="h-3 w-3" />
-                View Original
+                Source
               </a>
             </div>
           </div>

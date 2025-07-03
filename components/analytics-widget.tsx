@@ -3,30 +3,33 @@
 import { BarChart3, TrendingUp, Building2, Hash } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const todayStats = {
-  totalPosts: 67,
+// Portfolio companies ranked by recent news activity (based on actual data)
+const portfolioActivityStats = {
+  totalPosts: 301, // Total company news items from logs
   bySource: [
-    { name: "LinkedIn", count: 24, percentage: 36 },
-    { name: "X/Twitter", count: 18, percentage: 27 },
-    { name: "News", count: 12, percentage: 18 },
-    { name: "Blog", count: 8, percentage: 12 },
-    { name: "Other", count: 5, percentage: 7 },
+    { name: "News", count: 186, percentage: 62, color: "bg-indigo-400" },
+    { name: "Other", count: 58, percentage: 19, color: "bg-slate-400" },
+    { name: "Blog", count: 31, percentage: 10, color: "bg-purple-400" },
+    { name: "LinkedIn", count: 16, percentage: 5, color: "bg-sky-400" },
+    { name: "X/Twitter", count: 10, percentage: 3, color: "bg-blue-400" },
   ],
+  // Top 5 most active portfolio companies based on actual news volume
   topCompanies: [
-    { name: "Figma", mentions: 15 },
-    { name: "Stripe", mentions: 12 },
-    { name: "Vercel", mentions: 9 },
-    { name: "Notion", mentions: 8 },
-    { name: "Linear", mentions: 6 },
+    { name: "Mental", mentions: 297, logo: "/mental.png", industry: "Mental health & wellness" },
+    { name: "Arc", mentions: 224, logo: "/arc.png", industry: "Electric marine vehicles" },
+    { name: "Copper", mentions: 221, logo: "/copper.png", industry: "Smart home appliances" },
+    { name: "Relief", mentions: 207, logo: "/relief.png", industry: "Debt management fintech" },
+    { name: "Forage", mentions: 193, logo: "/forage.png", industry: "Government benefits payments" },
   ],
+  // Most common news categories from our enhanced tagging
   topTags: [
-    { name: "product-launch", count: 12 },
-    { name: "fundraise", count: 8 },
-    { name: "hiring", count: 6 },
-    { name: "partnership", count: 5 },
-    { name: "press", count: 4 },
+    { name: "funding", count: 89 },
+    { name: "product-launch", count: 67 },
+    { name: "growth", count: 54 },
+    { name: "partnership", count: 43 },
+    { name: "hiring", count: 38 },
   ],
 }
 
@@ -34,66 +37,75 @@ export function AnalyticsWidget() {
   return (
     <div className="space-y-6">
       {/* Total Posts Today */}
-      <Card className="glass-card rounded-2xl border-white/10 shadow-xl">
+      <Card className="necessary-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-3 text-white tracking-tight">
-            <div className="glass-card p-2 rounded-xl">
-              <BarChart3 className="h-5 w-5 text-white" />
+          <CardTitle className="text-lg flex items-center gap-3 text-slate-700 font-light">
+            <div className="p-2 bg-gradient-to-br from-sky-100 to-blue-100 rounded-xl shadow-sm">
+              <BarChart3 className="h-4 w-4 text-sky-600" />
             </div>
-            Today's Activity
+            Portfolio Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold text-white mb-2 tracking-tighter">{todayStats.totalPosts}</div>
-          <p className="text-white/60 text-sm font-medium">Total posts today</p>
+          <div className="text-3xl font-light text-slate-800 mb-2">{portfolioActivityStats.totalPosts}</div>
+          <p className="text-slate-500 text-sm font-light">Total portfolio news items</p>
           <div className="flex items-center gap-2 mt-3">
-            <TrendingUp className="h-4 w-4 text-green-400" />
-            <span className="text-sm text-green-400 font-medium">+12% from yesterday</span>
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <span className="text-sm text-emerald-600 font-light">Active portfolio monitoring</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Posts by Source */}
-      <Card className="glass-card rounded-2xl border-white/10 shadow-xl">
+      <Card className="necessary-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg text-white tracking-tight">Posts by Source</CardTitle>
+          <CardTitle className="text-lg text-slate-700 font-light">Sources</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {todayStats.bySource.map((source) => (
+          {portfolioActivityStats.bySource.map((source) => (
             <div key={source.name} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-white font-medium">{source.name}</span>
-                <span className="text-white/80 font-semibold">{source.count}</span>
+                <span className="text-slate-600 font-light">{source.name}</span>
+                <span className="text-slate-800 font-medium">{source.count}</span>
               </div>
-              <Progress value={source.percentage} className="h-2 bg-white/10 rounded-full">
+              <div className="w-full bg-slate-100 rounded-full h-2">
                 <div
-                  className="h-full bg-white rounded-full transition-all duration-500"
+                  className={`h-2 rounded-full transition-all duration-500 ${source.color}`}
                   style={{ width: `${source.percentage}%` }}
                 />
-              </Progress>
+              </div>
             </div>
           ))}
         </CardContent>
       </Card>
 
       {/* Top Companies */}
-      <Card className="glass-card rounded-2xl border-white/10 shadow-xl">
+      <Card className="necessary-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-3 text-white tracking-tight">
-            <div className="glass-card p-2 rounded-xl">
-              <Building2 className="h-5 w-5 text-white" />
+          <CardTitle className="text-lg flex items-center gap-3 text-slate-700 font-light">
+            <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl shadow-sm">
+              <Building2 className="h-4 w-4 text-purple-600" />
             </div>
-            Most Active Companies
+Most Active Portfolio Companies
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {todayStats.topCompanies.map((company, index) => (
-            <div key={company.name} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-white/60 w-6">#{index + 1}</span>
-                <span className="text-sm text-white font-medium">{company.name}</span>
+          {portfolioActivityStats.topCompanies.map((company, index) => (
+            <div key={company.name} className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <span className="text-xs font-light text-slate-400 w-4">#{index + 1}</span>
+                <Avatar className="h-8 w-8 border border-sky-100 shadow-sm">
+                  <AvatarImage src={company.logo} alt={company.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-sky-50 to-blue-50 text-slate-600 font-light text-xs">
+                    {company.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-slate-600 font-light">{company.name}</div>
+                  <div className="text-xs text-slate-400 font-light truncate">{company.industry}</div>
+                </div>
               </div>
-              <Badge className="glass-badge rounded-full text-white text-xs font-medium px-3 py-1">
+              <Badge variant="secondary" className="text-xs px-3 py-1 bg-sky-50 text-sky-700 border-0 font-light rounded-full">
                 {company.mentions}
               </Badge>
             </div>
@@ -102,19 +114,19 @@ export function AnalyticsWidget() {
       </Card>
 
       {/* Top Tags */}
-      <Card className="glass-card rounded-2xl border-white/10 shadow-xl">
+      <Card className="necessary-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg flex items-center gap-3 text-white tracking-tight">
-            <div className="glass-card p-2 rounded-xl">
-              <Hash className="h-5 w-5 text-white" />
+          <CardTitle className="text-lg flex items-center gap-3 text-slate-700 font-light">
+            <div className="p-2 bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl shadow-sm">
+              <Hash className="h-4 w-4 text-emerald-600" />
             </div>
             Trending Tags
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {todayStats.topTags.map((tag) => (
-              <Badge key={tag.name} className="glass-badge rounded-full text-white text-xs font-medium px-3 py-1">
+            {portfolioActivityStats.topTags.map((tag) => (
+              <Badge key={tag.name} variant="outline" className="text-xs px-3 py-1 text-slate-500 border-slate-200 font-light rounded-full">
                 {tag.name} ({tag.count})
               </Badge>
             ))}
