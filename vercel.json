@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "SERPAPI_KEY": "@serpapi_key",
+    "CRUNCHBASE_API_KEY": "@crunchbase_api_key"
+  }
+} 
