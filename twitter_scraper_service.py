@@ -415,10 +415,13 @@ vc_urls = [
     "https://www.bessemervp.com/companies"
 ]
 
+app = Flask(__name__)
+CORS(app)
+
+analyzer = CompanyTwitterAnalyzer()
+portfolio_scraper = VCPortfolioScraper()
+
 def analyze_all_portfolio_companies():
-    portfolio_scraper = VCPortfolioScraper()
-    analyzer = CompanyTwitterAnalyzer()
-    
     print("Scraping portfolio companies from multiple VC sites...")
     
     companies = portfolio_scraper.scrape_multiple_vcs(vc_urls)
