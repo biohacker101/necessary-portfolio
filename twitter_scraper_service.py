@@ -133,3 +133,69 @@ logger = logging.getLogger(__name__)
         
         logger.info(f"Scraped {len(tweets)} tweets for {company_name}")
         return tweets
+
+    def analyze_tweet(self, tweet: Tweet, company_name: str) -> TweetAnalysis:
+        text_lower = tweet.text.lower()
+        
+        relevance_score = 0.0
+        keywords_matched = []
+        
+        if company_name.lower() in text_lower:
+            relevance_score += 2.0
+        
+        category_scores = {}
+        for category, keywords in self.vc_keywords.items():
+            category_score = 0
+            for keyword in keywords:
+                if keyword.lower() in text_lower:
+                    category_score += 1
+                    keywords_matched.append(keyword)
+                    relevance_score += 1.0 if category != 'negative' else -0.5
+            category_scores[category] = category_score
+        
+        primary_category = max(category_scores.items(), key=lambda x: x[1])[0] if any(category_scores.values()) else 'general'
+        
+        if tweet.author.lower() in self.high_value_accounts:
+            relevance_score += 3.0
+        
+        if tweet.is_verified:
+            relevance_score += 1.0
+        
+        engagement_score = (tweet.likes + tweet.retweets * 2 + tweet.replies) / max(tweet.author_followers, 1) * 1000
+        relevance_score += min(engagement_score, 2.0)
+        
+        if relevance_score >= 5.0:
+            importance_level = 'high'
+        elif relevance_score >= 2.0:
+            importance_level = 'medium'
+        else:
+            importance_level = 'low'
+        
+        positive_words = ['good', 'great', 'excellent', 'amazing', 'successful', 'growth', 'wins', 'positive', 'bullish']
+        negative_words = ['bad', 'terrible', 'awful', 'failed', 'struggling', 'concerning', 'negative', 'bearish']
+        
+        positive_count = sum(1 for word in positive_words if word in text_lower)
+        negative_count = sum(1 for word in negative_words if word in text_lower)
+        
+        if positive_count > negative_count:
+            sentiment = 'positive'
+        elif negative_count > positive_count:
+            sentiment = 'negative'
+        else:
+            sentiment = 'neutral'
+        
+        author_desc = "verified account" if tweet.is_verified else "account"
+        if tweet.author.lower() in self.high_value_accounts:
+            author_desc = "high-profile " + author_desc
+        
+        engagement = tweet.likes + tweet.retweets + tweet.replies
+        summary = f"{primary_category.title()} mention by {author_desc} @{tweet.author} ({engagement} total engagement) - {sentiment} sentiment"
+        
+        return TweetAnalysis(
+            relevance_score=round(relevance_score, 2),
+            category=primary_category,
+            sentiment=sentiment,
+            keywords_matched=list(set(keywords_matched)),
+            importance_level=importance_level,
+            summary=summary
+        )
