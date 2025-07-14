@@ -404,3 +404,156 @@ class VCPortfolioScraper:
         
         unique_companies = list(dict.fromkeys(all_companies))
         return unique_companies
+
+vc_urls = [
+    "https://www.necessary.vc/",
+    "https://a16z.com/portfolio/",
+    "https://www.sequoiacap.com/companies/",
+    "https://www.gv.com/portfolio/",
+    "https://www.accel.com/portfolio",
+    "https://founderfund.com/portfolio/",
+    "https://www.bessemervp.com/companies"
+]
+
+def analyze_all_portfolio_companies():
+    portfolio_scraper = VCPortfolioScraper()
+    analyzer = CompanyTwitterAnalyzer()
+    
+    print("Scraping portfolio companies from multiple VC sites...")
+    
+    companies = portfolio_scraper.scrape_multiple_vcs(vc_urls)
+    
+    if not companies:
+        print("No companies found. Using default list.")
+        companies = ["Airbnb", "Stripe", "SpaceX", "Tesla", "Notion", "Figma", "Discord", "Zoom"]
+    
+    print(f"Found {len(companies)} total companies from all VC sites:")
+    for i, company in enumerate(companies, 1):
+        print(f"  {i}. {company}")
+    
+    all_reports = {}
+    all_tweets_data = []
+    
+    print(f"\nAnalyzing Twitter mentions for {len(companies)} companies...")
+    
+    for i, company in enumerate(companies, 1):
+        print(f"[{i}/{len(companies)}] Analyzing {company}...")
+        
+        try:
+            report = analyzer.generate_company_report(company, days_back=7, max_tweets=50)
+            all_reports[company] = report
+            
+            for tweet, analysis in zip(report.tweets, report.analyses):
+                all_tweets_data.append({
+                    'Company': company,
+                    'Tweet ID': tweet.id,
+                    'Author': tweet.author,
+                    'Author Followers': tweet.author_followers,
+                    'Verified': tweet.is_verified,
+                    'Text': tweet.text,
+                    'Timestamp': tweet.timestamp,
+                    'Likes': tweet.likes,
+                    'Retweets': tweet.retweets,
+                    'Replies': tweet.replies,
+                    'URL': tweet.url,
+                    'Relevance Score': analysis.relevance_score,
+                    'Category': analysis.category,
+                    'Sentiment': analysis.sentiment,
+                    'Importance': analysis.importance_level,
+                    'Keywords': ', '.join(analysis.keywords_matched),
+                    'Summary': analysis.summary
+                })
+            
+            print(f"  Found {report.total_tweets} tweets")
+            time.sleep(2)
+            
+        except Exception as e:
+            print(f"  Error analyzing {company}: {e}")
+            continue
+    
+    print(f"\nGenerating comprehensive Excel report...")
+    output = BytesIO()
+    
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        
+        portfolio_summary = []
+        for company, report in all_reports.items():
+            portfolio_summary.append({
+                'Company': company,
+                'Total Tweets': report.total_tweets,
+                'Avg Relevance Score': report.summary_stats['average_relevance_score'],
+                'High Importance': report.summary_stats['high_importance_tweets'],
+                'Total Engagement': report.summary_stats['total_engagement'],
+                'Positive Sentiment': report.sentiment_breakdown['positive'],
+                'Negative Sentiment': report.sentiment_breakdown['negative'],
+                'Neutral Sentiment': report.sentiment_breakdown['neutral'],
+                'Top Category': max(report.category_breakdown.items(), key=lambda x: x[1])[0] if report.category_breakdown else 'None'
+            })
+        
+        pd.DataFrame(portfolio_summary).to_excel(writer, sheet_name='Portfolio Summary', index=False)
+        
+        if all_tweets_data:
+            all_tweets_df = pd.DataFrame(all_tweets_data)
+            all_tweets_df = all_tweets_df.sort_values(['Company', 'Relevance Score'], ascending=[True, False])
+            all_tweets_df.to_excel(writer, sheet_name='All Tweets', index=False)
+        
+        for company, report in all_reports.items():
+            if report.tweets:
+                company_tweets = []
+                for tweet, analysis in zip(report.tweets, report.analyses):
+                    company_tweets.append({
+                        'Tweet ID': tweet.id,
+                        'Author': tweet.author,
+                        'Verified': tweet.is_verified,
+                        'Text': tweet.text,
+                        'Timestamp': tweet.timestamp,
+                        'Likes': tweet.likes,
+                        'Retweets': tweet.retweets,
+                        'Relevance Score': analysis.relevance_score,
+                        'Category': analysis.category,
+                        'Sentiment': analysis.sentiment,
+                        'Importance': analysis.importance_level,
+                        'Summary': analysis.summary
+                    })
+                
+                sheet_name = company[:31]
+                pd.DataFrame(company_tweets).to_excel(writer, sheet_name=sheet_name, index=False)
+        
+        overall_sentiment = {'positive': 0, 'negative': 0, 'neutral': 0}
+        overall_categories = {}
+        
+        for report in all_reports.values():
+            for sentiment, count in report.sentiment_breakdown.items():
+                overall_sentiment[sentiment] += count
+            for category, count in report.category_breakdown.items():
+                overall_categories[category] = overall_categories.get(category, 0) + count
+        
+        sentiment_df = pd.DataFrame([
+            {'Sentiment': k, 'Count': v} for k, v in overall_sentiment.items()
+        ])
+        sentiment_df.to_excel(writer, sheet_name='Overall Sentiment', index=False)
+        
+        if overall_categories:
+            categories_df = pd.DataFrame([
+                {'Category': k, 'Count': v} for k, v in overall_categories.items()
+            ])
+            categories_df.to_excel(writer, sheet_name='Overall Categories', index=False)
+    
+    output.seek(0)
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"vc_portfolio_twitter_analysis_{timestamp}.xlsx"
+    
+    with open(filename, 'wb') as f:
+        f.write(output.getvalue())
+    
+    print(f"\nAnalysis complete! Report saved as: {filename}")
+    print(f"Analyzed {len(all_reports)} companies")
+    print(f"Found {len(all_tweets_data)} total tweets")
+    print(f"Report includes:")
+    print(f"   - Portfolio Summary sheet")
+    print(f"   - All Tweets master list")
+    print(f"   - Individual company sheets")
+    print(f"   - Sentiment & category breakdowns")
+    
+    return filename
