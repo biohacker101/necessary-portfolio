@@ -84,3 +84,52 @@ class CompanyTwitterAnalyzer:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+    def scrape_company_tweets(self, company_name: str, days_back: int = 7, max_tweets: int = 100) -> List[Tweet]:
+        tweets = []
+        if not SNSCRAPE_AVAILABLE:
+            logger.error("snscrape not available - install with: pip install snscrape")
+            return tweets
+            
+        queries = [
+            f'"{company_name}"',
+            f'{company_name} funding',
+            f'{company_name} revenue'
+        ]
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+        
+        for query in queries[:2]:
+            search_query = f'{query} since:{start_date.strftime("%Y-%m-%d")} until:{end_date.strftime("%Y-%m-%d")}'
+            
+            try:
+                tweet_count = 0
+                for tweet in sntwitter.TwitterSearchScraper(search_query).get_items():
+                    if tweet_count >= max_tweets // len(queries):
+                        break
+                    
+                    tweet_obj = Tweet(
+                        id=str(tweet.id),
+                        text=tweet.rawContent,
+                        author=tweet.user.username,
+                        author_followers=tweet.user.followersCount or 0,
+                        timestamp=tweet.date,
+                        likes=tweet.likeCount or 0,
+                        retweets=tweet.retweetCount or 0,
+                        replies=tweet.replyCount or 0,
+                        url=tweet.url,
+                        hashtags=tweet.hashtags or [],
+                        mentions=[mention.username for mention in (tweet.mentionedUsers or [])],
+                        is_verified=tweet.user.verified or False
+                    )
+                    
+                    tweets.append(tweet_obj)
+                    tweet_count += 1
+                    
+            except Exception as e:
+                logger.error(f"Error scraping with query '{query}': {e}")
+                continue
+        
+        logger.info(f"Scraped {len(tweets)} tweets for {company_name}")
+        return tweets
