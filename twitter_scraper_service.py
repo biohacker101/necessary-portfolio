@@ -263,3 +263,11 @@ logger = logging.getLogger(__name__)
             category_breakdown=category_breakdown,
             top_keywords=top_keywords
         )
+
+class VCPortfolioScraper:
+    
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        })
