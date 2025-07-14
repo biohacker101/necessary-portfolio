@@ -394,3 +394,13 @@ class VCPortfolioScraper:
                     companies.append(company)
         
         return companies[:15]
+
+    def scrape_multiple_vcs(self, vc_urls: List[str]) -> List[str]:
+        all_companies = []
+        
+        for url in vc_urls:
+            companies = self.scrape_vc_site(url)
+            all_companies.extend(companies)
+        
+        unique_companies = list(dict.fromkeys(all_companies))
+        return unique_companies
