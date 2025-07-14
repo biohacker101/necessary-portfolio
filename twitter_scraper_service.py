@@ -586,3 +586,45 @@ def analyze_all_portfolio_companies():
     print(f"   - Sentiment & category breakdowns")
     
     return filename
+
+@app.route('/portfolio', methods=['GET'])
+def get_portfolio_companies():
+    companies = portfolio_scraper.scrape_multiple_vcs(vc_urls)
+    return jsonify({
+        "success": True,
+        "companies": companies,
+        "count": len(companies)
+    })
+
+@app.route('/add_vc', methods=['POST'])
+def add_vc_url():
+    data = request.get_json()
+    new_url = data.get('url')
+    
+    if new_url and new_url not in vc_urls:
+        vc_urls.append(new_url)
+        return jsonify({
+            "success": True,
+            "message": f"Added {new_url}",
+            "total_vcs": len(vc_urls)
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "message": "URL already exists or invalid"
+        }), 400
+
+@app.route('/analyze_all', methods=['POST'])
+def run_full_analysis():
+    try:
+        filename = analyze_all_portfolio_companies()
+        return jsonify({
+            "success": True,
+            "filename": filename,
+            "message": "Analysis complete"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
