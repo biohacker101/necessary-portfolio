@@ -271,3 +271,57 @@ class VCPortfolioScraper:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         })
+
+    def scrape_vc_site(self, vc_url: str) -> List[str]:
+        companies = []
+        
+        try:
+            response = self.session.get(vc_url, timeout=15)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            if "necessary.vc" in vc_url:
+                companies = self._scrape_necessary_vc(soup)
+            elif "a16z.com" in vc_url:
+                companies = self._scrape_a16z(soup)
+            elif "sequoiacap.com" in vc_url:
+                companies = self._scrape_sequoia(soup)
+            elif "gv.com" in vc_url:
+                companies = self._scrape_gv(soup)
+            else:
+                companies = self._scrape_generic_vc(soup, vc_url)
+            
+            logger.info(f"Found {len(companies)} companies from {vc_url}: {companies}")
+            
+        except Exception as e:
+            logger.error(f"Error scraping {vc_url}: {e}")
+        
+        return companies
+    
+    def _scrape_necessary_vc(self, soup) -> List[str]:
+        companies = []
+        text_content = soup.get_text()
+        potential_companies = re.findall(r'\b[A-Z][a-zA-Z\s&.-]{2,30}\b', text_content)
+        
+        exclude_words = {
+            'necessary', 'ventures', 'capital', 'portfolio', 'investment', 'fund', 
+            'about', 'team', 'contact', 'invest', 'company', 'companies', 'startup',
+            'startups', 'technology', 'innovation', 'venture', 'business', 'growth',
+            'early', 'stage', 'seed', 'series', 'round', 'equity', 'partners',
+            'management', 'leadership', 'founder', 'founders', 'ceo', 'board',
+            'advisory', 'experience', 'careers', 'join', 'work', 'opportunity',
+            'news', 'blog', 'press', 'media', 'events', 'newsletter', 'subscribe',
+            'follow', 'twitter', 'linkedin', 'facebook', 'instagram', 'social',
+            'privacy', 'terms', 'cookies', 'legal', 'disclaimer', 'copyright',
+            'rights', 'reserved', 'policy', 'statement', 'notice'
+        }
+        
+        for company in potential_companies:
+            company_clean = company.strip()
+            if (3 <= len(company_clean) <= 30 and 
+                not any(exclude in company_clean.lower() for exclude in exclude_words) and
+                not company_clean.isupper() and
+                not company_clean.islower() and
+                company_clean not in companies):
+                companies.append(company_clean)
+        
+        return companies[:15]
