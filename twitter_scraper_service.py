@@ -62,5 +62,25 @@ class CompanyTwitterReport:
     category_breakdown: Dict[str, int]
     top_keywords: List[str]
 
+class CompanyTwitterAnalyzer:
+    
+    def __init__(self):
+        self.vc_keywords = {
+            'revenue': ['revenue', 'sales', 'income', 'earnings', 'profit', 'growth', 'ARR', 'MRR', 'customers', 'subscription'],
+            'funding': ['funding', 'investment', 'round', 'raised', 'capital', 'investor', 'valuation', 'IPO', 'acquisition', 'merger'],
+            'product': ['product', 'launch', 'feature', 'update', 'release', 'beta', 'platform', 'technology', 'innovation'],
+            'partnership': ['partnership', 'collaboration', 'alliance', 'deal', 'contract', 'agreement', 'integration'],
+            'hiring': ['hiring', 'recruiting', 'team', 'joined', 'executive', 'CEO', 'CTO', 'CFO', 'VP', 'director'],
+            'market': ['market', 'industry', 'competition', 'sector', 'expansion', 'international', 'global'],
+            'awards': ['award', 'recognition', 'winner', 'best', 'top', 'leading', 'excellence', 'achievement'],
+            'negative': ['lawsuit', 'investigation', 'scandal', 'controversy', 'layoffs', 'closure', 'bankruptcy', 'fraud']
+        }
+        
+        self.high_value_accounts = [
+            'techcrunch', 'venturebeat', 'theinformation', 'axios', 'bloomberg', 'reuters',
+            'wsj', 'nytimes', 'ft', 'forbes', 'businessinsider', 'cnbc',
+            'a16z', 'sequoia', 'gv', 'accel', 'founderfund', 'bessemervp'
+        ]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
