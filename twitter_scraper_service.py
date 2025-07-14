@@ -325,3 +325,35 @@ class VCPortfolioScraper:
                 companies.append(company_clean)
         
         return companies[:15]
+
+    def _scrape_a16z(self, soup) -> List[str]:
+        companies = []
+        company_elements = soup.find_all(['h2', 'h3', 'h4'], class_=re.compile(r'company|portfolio'))
+        
+        for elem in company_elements:
+            name = elem.get_text().strip()
+            if 2 < len(name) < 50 and name not in companies:
+                companies.append(name)
+        
+        if not companies:
+            links = soup.find_all('a', href=True)
+            for link in links:
+                text = link.get_text().strip()
+                if (text and 2 < len(text) < 50 and 
+                    not any(word in text.lower() for word in ['portfolio', 'about', 'team', 'news'])):
+                    companies.append(text)
+        
+        return companies[:20]
+    
+    def _scrape_sequoia(self, soup) -> List[str]:
+        companies = []
+        company_divs = soup.find_all('div', class_=re.compile(r'company|portfolio|investment'))
+        
+        for div in company_divs:
+            name_elem = div.find(['h1', 'h2', 'h3', 'h4', 'span'])
+            if name_elem:
+                name = name_elem.get_text().strip()
+                if 2 < len(name) < 50 and name not in companies:
+                    companies.append(name)
+        
+        return companies[:20]
