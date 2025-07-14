@@ -628,3 +628,17 @@ def run_full_analysis():
             "success": False,
             "error": str(e)
         }), 500
+
+if __name__ == '__main__':
+    print("Starting Multi-VC Portfolio Twitter Analysis")
+    print(f"Configured to scrape {len(vc_urls)} VC sites:")
+    for i, url in enumerate(vc_urls, 1):
+        print(f"  {i}. {url}")
+    
+    print("\nTo add more VC sites, use: POST /add_vc with {'url': 'https://example.com'}")
+    print("Or use the Flask API at http://localhost:5002")
+    
+    analyze_all_portfolio_companies()
+    
+    port = int(os.environ.get('PORT', 5002))
+    app.run(host='0.0.0.0', port=port, debug=True)
