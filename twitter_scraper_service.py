@@ -357,3 +357,40 @@ class VCPortfolioScraper:
                     companies.append(name)
         
         return companies[:20]
+
+    def _scrape_gv(self, soup) -> List[str]:
+        companies = []
+        portfolio_items = soup.find_all(['div', 'li'], class_=re.compile(r'portfolio|company'))
+        
+        for item in portfolio_items:
+            text = item.get_text().strip()
+            if 2 < len(text) < 50 and text not in companies:
+                companies.append(text)
+        
+        return companies[:20]
+    
+    def _scrape_generic_vc(self, soup, url) -> List[str]:
+        companies = []
+        
+        portfolio_sections = soup.find_all(['section', 'div'], class_=re.compile(r'portfolio|companies|investments'))
+        
+        for section in portfolio_sections:
+            company_elements = section.find_all(['h1', 'h2', 'h3', 'h4', 'li', 'span'])
+            for elem in company_elements:
+                text = elem.get_text().strip()
+                if (2 < len(text) < 50 and 
+                    text not in companies and
+                    not any(word in text.lower() for word in ['portfolio', 'about', 'team', 'contact'])):
+                    companies.append(text)
+        
+        if not companies:
+            all_text = soup.get_text()
+            potential_companies = re.findall(r'\b[A-Z][a-zA-Z\s&.-]{2,40}\b', all_text)
+            
+            for company in potential_companies:
+                if (company not in companies and 
+                    len(company) > 2 and 
+                    not any(word in company.lower() for word in ['ventures', 'capital', 'fund', 'partners'])):
+                    companies.append(company)
+        
+        return companies[:15]
