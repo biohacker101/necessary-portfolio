@@ -27,5 +27,40 @@ try:
 except ImportError:
     SNSCRAPE_AVAILABLE = False
 
+@dataclass
+class Tweet:
+    id: str
+    text: str
+    author: str
+    author_followers: int
+    timestamp: datetime
+    likes: int
+    retweets: int
+    replies: int
+    url: str
+    hashtags: List[str]
+    mentions: List[str]
+    is_verified: bool
+
+@dataclass
+class TweetAnalysis:
+    relevance_score: float
+    category: str
+    sentiment: str
+    keywords_matched: List[str]
+    importance_level: str
+    summary: str
+
+@dataclass
+class CompanyTwitterReport:
+    company_name: str
+    total_tweets: int
+    tweets: List[Tweet]
+    analyses: List[TweetAnalysis]
+    summary_stats: Dict[str, Any]
+    sentiment_breakdown: Dict[str, int]
+    category_breakdown: Dict[str, int]
+    top_keywords: List[str]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
