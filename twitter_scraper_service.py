@@ -199,3 +199,67 @@ logger = logging.getLogger(__name__)
             importance_level=importance_level,
             summary=summary
         )
+
+    def generate_company_report(self, company_name: str, days_back: int = 7, max_tweets: int = 100) -> CompanyTwitterReport:
+        logger.info(f"Generating Twitter report for {company_name}")
+        
+        tweets = self.scrape_company_tweets(company_name, days_back, max_tweets)
+        
+        analyses = []
+        for tweet in tweets:
+            analysis = self.analyze_tweet(tweet, company_name)
+            analyses.append(analysis)
+        
+        combined = list(zip(tweets, analyses))
+        combined.sort(key=lambda x: x[1].relevance_score, reverse=True)
+        tweets, analyses = zip(*combined) if combined else ([], [])
+        
+        if analyses:
+            sentiment_breakdown = {
+                'positive': sum(1 for a in analyses if a.sentiment == 'positive'),
+                'negative': sum(1 for a in analyses if a.sentiment == 'negative'),
+                'neutral': sum(1 for a in analyses if a.sentiment == 'neutral')
+            }
+            
+            category_breakdown = {}
+            for analysis in analyses:
+                category_breakdown[analysis.category] = category_breakdown.get(analysis.category, 0) + 1
+            
+            all_keywords = []
+            for analysis in analyses:
+                all_keywords.extend(analysis.keywords_matched)
+            
+            top_keywords = [item[0] for item in pd.Series(all_keywords).value_counts().head(10).items()] if all_keywords else []
+            
+            avg_relevance = sum(a.relevance_score for a in analyses) / len(analyses)
+            high_importance_count = sum(1 for a in analyses if a.importance_level == 'high')
+            
+            summary_stats = {
+                'average_relevance_score': round(avg_relevance, 2),
+                'high_importance_tweets': high_importance_count,
+                'total_engagement': sum(t.likes + t.retweets + t.replies for t in tweets),
+                'verified_authors': sum(1 for t in tweets if t.is_verified),
+                'avg_author_followers': round(sum(t.author_followers for t in tweets) / len(tweets)) if tweets else 0
+            }
+        else:
+            sentiment_breakdown = {'positive': 0, 'negative': 0, 'neutral': 0}
+            category_breakdown = {}
+            top_keywords = []
+            summary_stats = {
+                'average_relevance_score': 0,
+                'high_importance_tweets': 0,
+                'total_engagement': 0,
+                'verified_authors': 0,
+                'avg_author_followers': 0
+            }
+        
+        return CompanyTwitterReport(
+            company_name=company_name,
+            total_tweets=len(tweets),
+            tweets=list(tweets),
+            analyses=list(analyses),
+            summary_stats=summary_stats,
+            sentiment_breakdown=sentiment_breakdown,
+            category_breakdown=category_breakdown,
+            top_keywords=top_keywords
+        )
