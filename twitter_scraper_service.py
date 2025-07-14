@@ -421,6 +421,32 @@ CORS(app)
 analyzer = CompanyTwitterAnalyzer()
 portfolio_scraper = VCPortfolioScraper()
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "snscrape_available": SNSCRAPE_AVAILABLE
+    })
+
+@app.route('/analyze/<company_name>', methods=['GET'])
+def analyze_company(company_name):
+    days_back = request.args.get('days', 7, type=int)
+    max_tweets = request.args.get('max_tweets', 100, type=int)
+    
+    report = analyzer.generate_company_report(company_name, days_back, max_tweets)
+    
+    return jsonify({
+        "success": True,
+        "data": {
+            "company_name": report.company_name,
+            "total_tweets": report.total_tweets,
+            "summary_stats": report.summary_stats,
+            "sentiment_breakdown": report.sentiment_breakdown,
+            "category_breakdown": report.category_breakdown,
+            "top_keywords": report.top_keywords
+        }
+    })
+
 def analyze_all_portfolio_companies():
     print("Scraping portfolio companies from multiple VC sites...")
     
